@@ -24,20 +24,24 @@ class CaptureOut(BaseModel):
 
 class TaskCreate(BaseModel):
     title: str = Field(min_length=1)
+    description: str = ""
     priority: str = "medium"
     due_date: datetime | None = None
 
 
 class TaskUpdate(BaseModel):
     title: str | None = None
+    description: str | None = None
     status: str | None = None
     priority: str | None = None
     due_date: datetime | None = None
+    clear_due_date: bool = False
 
 
 class TaskOut(BaseModel):
     id: int
     title: str
+    description: str
     status: str
     priority: str
     due_date: datetime | None
@@ -76,6 +80,8 @@ class SummaryOut(BaseModel):
     tasks_open: int
     reminders_pending: int
     reminders_sent_today: int
+    notes_total: int = 0
+    tasks_done_today: int = 0
 
 
 class ApiKeyCreate(BaseModel):
@@ -151,3 +157,34 @@ class InboxItemOut(BaseModel):
 
 class InboxPromoteTaskCreate(BaseModel):
     priority: str = "medium"
+
+
+class HabitCreate(BaseModel):
+    name: str = Field(min_length=1)
+    icon: str = "check"
+    color: str = "green"
+
+
+class HabitOut(BaseModel):
+    id: int
+    name: str
+    icon: str
+    color: str
+    is_active: bool
+    created_at: datetime
+    streak: int = 0
+    completed_today: bool = False
+
+
+class HabitLogOut(BaseModel):
+    id: int
+    habit_id: int
+    log_date: str
+    completed: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class HabitToggle(BaseModel):
+    date: str | None = None

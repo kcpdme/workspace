@@ -2,6 +2,8 @@ from datetime import datetime
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import JSONResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -16,7 +18,7 @@ from app.services.summary_service import get_today_summary
 router = APIRouter(prefix="/api", tags=["api"], dependencies=[Depends(require_api_key)])
 
 ALLOWED_TASK_PRIORITIES = {"low", "medium", "high"}
-ALLOWED_TASK_STATUSES = {"todo", "done"}
+ALLOWED_TASK_STATUSES = {"todo", "in_progress", "done"}
 
 
 @router.get("/inbox", response_model=list[schemas.InboxItemOut])
@@ -155,7 +157,7 @@ def promote_inbox_to_task(
         raise HTTPException(status_code=400, detail="priority must be low, medium, or high")
 
     title = item.text.strip() or f"Review Telegram {item.item_type} item #{item.message_id}"
-    task = models.Task(title=title[:255], status="todo", priority=priority)
+    task = models.Task(title=title[:255], description="", status="todo", priority=priority)
     item.is_archived = True
     db.add(task)
     db.add(item)
@@ -225,7 +227,12 @@ def create_task(payload: schemas.TaskCreate, db: Session = Depends(get_db)):
     if priority not in ALLOWED_TASK_PRIORITIES:
         raise HTTPException(status_code=400, detail="priority must be low, medium, or high")
 
-    task = models.Task(title=title, priority=priority, due_date=payload.due_date)
+    task = models.Task(
+        title=title,
+        description=payload.description.strip() if payload.description else "",
+        priority=priority,
+        due_date=payload.due_date,
+    )
     db.add(task)
     db.commit()
     db.refresh(task)
@@ -243,17 +250,21 @@ def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends
         if not title:
             raise HTTPException(status_code=400, detail="title cannot be empty")
         task.title = title
+    if payload.description is not None:
+        task.description = payload.description.strip()
     if payload.status is not None:
         status = payload.status.strip().lower()
         if status not in ALLOWED_TASK_STATUSES:
-            raise HTTPException(status_code=400, detail="status must be todo or done")
+            raise HTTPException(status_code=400, detail="status must be todo, in_progress, or done")
         task.status = status
     if payload.priority is not None:
         priority = payload.priority.strip().lower()
         if priority not in ALLOWED_TASK_PRIORITIES:
             raise HTTPException(status_code=400, detail="priority must be low, medium, or high")
         task.priority = priority
-    if payload.due_date is not None:
+    if payload.clear_due_date:
+        task.due_date = None
+    elif payload.due_date is not None:
         task.due_date = payload.due_date
 
     db.add(task)
@@ -270,6 +281,30 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.delete(task)
     db.commit()
     return {"ok": True}
+
+
+@router.post("/tasks/batch-action")
+def batch_task_action(action: str, ids: list[int], db: Session = Depends(get_db)):
+    """Batch action on multiple tasks: mark_done, mark_todo, delete."""
+    if action not in {"mark_done", "mark_todo", "delete"}:
+        raise HTTPException(status_code=400, detail="action must be mark_done, mark_todo, or delete")
+    if not ids:
+        raise HTTPException(status_code=400, detail="ids cannot be empty")
+
+    tasks = db.query(models.Task).filter(models.Task.id.in_(ids)).all()
+    count = 0
+    for t in tasks:
+        if action == "mark_done":
+            t.status = "done"
+            db.add(t)
+        elif action == "mark_todo":
+            t.status = "todo"
+            db.add(t)
+        elif action == "delete":
+            db.delete(t)
+        count += 1
+    db.commit()
+    return {"ok": True, "affected": count}
 
 
 @router.delete("/reminders/{reminder_id}")
@@ -306,8 +341,6 @@ def create_reminder(payload: schemas.ReminderCreate, db: Session = Depends(get_d
         recurrence_minutes=recurrence_minutes,
         status="pending",
     )
-    if reminder.remind_at < datetime.utcnow():
-        reminder.status = "pending"
 
     db.add(reminder)
     db.commit()
@@ -420,6 +453,176 @@ def update_note(note_id: int, payload: schemas.NoteUpdate, db: Session = Depends
     )
 
 
+# ═══ HABITS ═══
+
+@router.get("/habits")
+def list_habits(db: Session = Depends(get_db)):
+    habits = db.query(models.Habit).filter(models.Habit.is_active.is_(True)).order_by(models.Habit.created_at.asc()).all()
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    result = []
+    for h in habits:
+        # Calculate streak
+        streak = 0
+        logs = (
+            db.query(models.HabitLog)
+            .filter(models.HabitLog.habit_id == h.id)
+            .filter(models.HabitLog.completed.is_(True))
+            .order_by(models.HabitLog.log_date.desc())
+            .limit(60)
+            .all()
+        )
+        if logs:
+            from datetime import timedelta
+            check_date = datetime.utcnow().date()
+            for log in logs:
+                if log.log_date == check_date.strftime("%Y-%m-%d"):
+                    streak += 1
+                    check_date -= timedelta(days=1)
+                elif log.log_date == (check_date - timedelta(days=0)).strftime("%Y-%m-%d"):
+                    # Allow today to be unchecked and still count yesterday's streak
+                    pass
+                else:
+                    break
+
+        completed_today = any(l.log_date == today and l.completed for l in logs)
+        result.append(schemas.HabitOut(
+            id=h.id,
+            name=h.name,
+            icon=h.icon,
+            color=h.color,
+            is_active=h.is_active,
+            created_at=h.created_at,
+            streak=streak,
+            completed_today=completed_today,
+        ))
+    return result
+
+
+@router.post("/habits")
+def create_habit(payload: schemas.HabitCreate, db: Session = Depends(get_db)):
+    habit = models.Habit(
+        name=payload.name.strip(),
+        icon=payload.icon.strip() or "check",
+        color=payload.color.strip() or "green",
+        is_active=True,
+    )
+    db.add(habit)
+    db.commit()
+    db.refresh(habit)
+    return schemas.HabitOut(
+        id=habit.id,
+        name=habit.name,
+        icon=habit.icon,
+        color=habit.color,
+        is_active=habit.is_active,
+        created_at=habit.created_at,
+        streak=0,
+        completed_today=False,
+    )
+
+
+@router.post("/habits/{habit_id}/toggle")
+def toggle_habit(habit_id: int, payload: schemas.HabitToggle = None, db: Session = Depends(get_db)):
+    if payload is None:
+        payload = schemas.HabitToggle()
+    habit = db.query(models.Habit).filter(models.Habit.id == habit_id).first()
+    if not habit:
+        raise HTTPException(status_code=404, detail="Habit not found")
+
+    log_date = payload.date or datetime.utcnow().strftime("%Y-%m-%d")
+    existing = (
+        db.query(models.HabitLog)
+        .filter(models.HabitLog.habit_id == habit_id)
+        .filter(models.HabitLog.log_date == log_date)
+        .first()
+    )
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"ok": True, "completed": False, "date": log_date}
+    else:
+        log = models.HabitLog(habit_id=habit_id, log_date=log_date, completed=True)
+        db.add(log)
+        db.commit()
+        return {"ok": True, "completed": True, "date": log_date}
+
+
+@router.delete("/habits/{habit_id}")
+def delete_habit(habit_id: int, db: Session = Depends(get_db)):
+    habit = db.query(models.Habit).filter(models.Habit.id == habit_id).first()
+    if not habit:
+        raise HTTPException(status_code=404, detail="Habit not found")
+    habit.is_active = False
+    db.add(habit)
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/habits/{habit_id}/logs")
+def habit_logs(habit_id: int, db: Session = Depends(get_db)):
+    logs = (
+        db.query(models.HabitLog)
+        .filter(models.HabitLog.habit_id == habit_id)
+        .filter(models.HabitLog.completed.is_(True))
+        .order_by(models.HabitLog.log_date.desc())
+        .limit(90)
+        .all()
+    )
+    return [{"date": l.log_date, "completed": l.completed} for l in logs]
+
+
+# ═══ EXPORT ═══
+
+@router.get("/export")
+def export_all_data(db: Session = Depends(get_db)):
+    """Export all data as JSON for backup/portability."""
+    captures = db.query(models.Capture).order_by(models.Capture.created_at.desc()).all()
+    tasks = db.query(models.Task).order_by(models.Task.created_at.desc()).all()
+    reminders = db.query(models.Reminder).order_by(models.Reminder.remind_at.desc()).all()
+    notes_raw = db.query(models.EncryptedNote).order_by(models.EncryptedNote.updated_at.desc()).all()
+
+    notes = []
+    for n in notes_raw:
+        try:
+            content = decrypt_text(n.cipher_text)
+        except Exception:
+            content = "<decryption failed>"
+        notes.append({
+            "id": n.id, "title": n.title, "content": content,
+            "created_at": n.created_at.isoformat() if n.created_at else None,
+            "updated_at": n.updated_at.isoformat() if n.updated_at else None,
+        })
+
+    data = {
+        "exported_at": datetime.utcnow().isoformat(),
+        "captures": [
+            {"id": c.id, "content": c.content, "url": c.url,
+             "created_at": c.created_at.isoformat() if c.created_at else None}
+            for c in captures
+        ],
+        "tasks": [
+            {"id": t.id, "title": t.title, "description": t.description,
+             "status": t.status, "priority": t.priority,
+             "due_date": t.due_date.isoformat() if t.due_date else None,
+             "created_at": t.created_at.isoformat() if t.created_at else None}
+            for t in tasks
+        ],
+        "reminders": [
+            {"id": r.id, "message": r.message, "channel": r.channel,
+             "target": r.target, "remind_at": r.remind_at.isoformat() if r.remind_at else None,
+             "is_recurring": r.is_recurring, "recurrence_minutes": r.recurrence_minutes,
+             "status": r.status, "created_at": r.created_at.isoformat() if r.created_at else None}
+            for r in reminders
+        ],
+        "notes": notes,
+    }
+    return JSONResponse(content=data, headers={
+        "Content-Disposition": "attachment; filename=automation_hub_export.json"
+    })
+
+
+# ═══ TELEGRAM ═══
+
 @router.get("/telegram/allowlist", response_model=list[schemas.TelegramUserOut])
 def list_allowed_telegram_users(db: Session = Depends(get_db)):
     return db.query(models.AllowedTelegramUser).order_by(models.AllowedTelegramUser.created_at.desc()).all()
@@ -461,6 +664,8 @@ def deactivate_allowed_telegram_user(record_id: int, db: Session = Depends(get_d
     db.refresh(record)
     return record
 
+
+# ═══ AUTH KEYS ═══
 
 @router.get("/auth/keys", response_model=list[schemas.ApiKeyOut])
 def list_api_keys(db: Session = Depends(get_db)):

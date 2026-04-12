@@ -44,6 +44,16 @@ function Icon({ name, size = 18 }) {
     "alert-triangle": html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
     activity: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
     "archive-x": html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="m9.5 17 5-5"/><path d="m9.5 12 5 5"/></svg>`,
+    timer: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>`,
+    flame: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+    download: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>`,
+    moon: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
+    sun: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`,
+    play: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>`,
+    pause: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg>`,
+    "skip-forward": html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>`,
+    "loader": html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>`,
+    target: html`<svg width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
   };
   return icons[name] || null;
 }
@@ -72,7 +82,7 @@ function relativeTime(value) {
   const days = Math.floor(hours / 24);
   if (diff > 0) {
     if (mins < 60) return `in ${mins}m`;
-    if (hours < 24) return `in ${hours}h`;
+    if (hours < 24) return `in ${hours}h ${mins % 60}m`;
     return `in ${days}d`;
   }
   if (mins < 60) return `${mins}m ago`;
@@ -107,6 +117,8 @@ const NAV_CONFIG = [
   { id: "tasks", label: "Tasks", icon: "check-square" },
   { id: "notes", label: "Notes", icon: "file-lock" },
   { id: "reminders", label: "Reminders", icon: "bell" },
+  { id: "habits", label: "Habits", icon: "target" },
+  { id: "pomodoro", label: "Focus Timer", icon: "timer" },
   { id: "settings", label: "Settings", icon: "settings" },
 ];
 
@@ -117,6 +129,8 @@ const SECTION_META = {
   tasks: { title: "Task Board", subtitle: "Track priorities and execution progress." },
   notes: { title: "Encrypted Notes", subtitle: "Secure, encrypted notes stored at rest." },
   reminders: { title: "Reminders", subtitle: "Schedule delivery with optional recurrence." },
+  habits: { title: "Habit Tracker", subtitle: "Build consistent habits with daily tracking and streaks." },
+  pomodoro: { title: "Focus Timer", subtitle: "Pomodoro technique — work in focused intervals." },
   settings: { title: "Settings", subtitle: "Configure keys, preferences, and workspace." },
 };
 
@@ -165,6 +179,10 @@ function EditModal({ title, fields, values, onSave, onCancel }) {
                     rows="4"
                     placeholder=${f.placeholder || ""}
                   />`
+                : f.type === "select"
+                ? html`<select value=${formValues[f.key] || ""} onChange=${(e) => setFormValues({ ...formValues, [f.key]: e.target.value })}>
+                    ${(f.options || []).map(o => html`<option key=${o.value} value=${o.value}>${o.label}</option>`)}
+                  </select>`
                 : html`<input
                     type=${f.type || "text"}
                     value=${formValues[f.key] || ""}
@@ -202,10 +220,113 @@ function ProgressBar({ value, max, label, color = "var(--green-500)" }) {
   `;
 }
 
+/* ─── Pomodoro Timer Component ─── */
+function PomodoroTimer({ addToast }) {
+  const MODES = { focus: 25 * 60, short: 5 * 60, long: 15 * 60 };
+  const [mode, setMode] = useState("focus");
+  const [seconds, setSeconds] = useState(MODES.focus);
+  const [running, setRunning] = useState(false);
+  const [sessions, setSessions] = useState(0);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = setInterval(() => {
+        setSeconds(s => {
+          if (s <= 1) {
+            clearInterval(intervalRef.current);
+            setRunning(false);
+            // Play notification sound
+            try { new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbX19fYGFhYWFhX19fX19gYWFhYWFfX19fX2BhYWFhYV9fX19fYGFhQ==").play(); } catch {}
+            if (mode === "focus") {
+              setSessions(s => s + 1);
+              addToast("Focus session complete! Take a break.", "success");
+            } else {
+              addToast("Break over! Time to focus.", "info");
+            }
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [running]);
+
+  function switchMode(m) {
+    setRunning(false);
+    clearInterval(intervalRef.current);
+    setMode(m);
+    setSeconds(MODES[m]);
+  }
+
+  function toggle() { setRunning(r => !r); }
+  function reset() { setRunning(false); clearInterval(intervalRef.current); setSeconds(MODES[mode]); }
+
+  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const ss = String(seconds % 60).padStart(2, "0");
+  const pct = ((MODES[mode] - seconds) / MODES[mode]) * 100;
+
+  return html`
+    <section className="panel section-panel" id="section-pomodoro">
+      <div className="section-head">
+        <h2><${Icon} name="timer" /> Focus Timer</h2>
+        <p className="muted">Pomodoro technique — work in focused intervals for better productivity.</p>
+      </div>
+
+      <div className="pomodoro-container">
+        <div className="pomodoro-mode-selector">
+          ${[["focus", "Focus", "25m"], ["short", "Short Break", "5m"], ["long", "Long Break", "15m"]].map(([m, label, time]) => html`
+            <button key=${m} className=${`ghost sm ${mode === m ? "active" : ""}`} onClick=${() => switchMode(m)}>
+              ${label} (${time})
+            </button>
+          `)}
+        </div>
+
+        <div className="pomodoro-timer">
+          <svg className="pomodoro-ring" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" strokeWidth="6" fill="none" stroke="var(--line)" />
+            <circle cx="60" cy="60" r="52" strokeWidth="6" fill="none"
+              stroke=${mode === "focus" ? "var(--green-500)" : "var(--blue-600)"}
+              strokeDasharray=${2 * Math.PI * 52}
+              strokeDashoffset=${2 * Math.PI * 52 * (1 - pct / 100)}
+              strokeLinecap="round"
+              transform="rotate(-90 60 60)"
+              style=${{ transition: "stroke-dashoffset 0.3s ease" }}
+            />
+          </svg>
+          <div className="pomodoro-display">
+            <div className="pomodoro-time">${mm}:${ss}</div>
+            <div className="pomodoro-mode-label">${mode === "focus" ? "Focus" : mode === "short" ? "Short Break" : "Long Break"}</div>
+          </div>
+        </div>
+
+        <div className="pomodoro-controls">
+          <button className=${running ? "ghost" : ""} onClick=${toggle}>
+            <${Icon} name=${running ? "pause" : "play"} size=${16} /> ${running ? "Pause" : "Start"}
+          </button>
+          <button className="ghost" onClick=${reset}>
+            <${Icon} name="refresh-cw" size=${14} /> Reset
+          </button>
+        </div>
+
+        <div className="pomodoro-stats">
+          <div className="pomodoro-stat">
+            <${Icon} name="flame" size=${16} />
+            <span>${sessions} session${sessions !== 1 ? "s" : ""} today</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+
 /* ─── Main App ─── */
 function App() {
   const [section, setSection] = useState(localStorage.getItem("hub_section") || "summary");
   const [density, setDensity] = useState(localStorage.getItem("hub_density") || "comfortable");
+  const [darkMode, setDarkMode] = useState(localStorage.getItem("hub_dark_mode") === "true");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem(keyStorage) || "");
   const [status, setStatus] = useState("");
@@ -222,6 +343,7 @@ function App() {
   const [reminders, setReminders] = useState([]);
   const [inboxItems, setInboxItems] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [habits, setHabits] = useState([]);
 
   const [captureForm, setCaptureForm] = useState({ content: "", url: "" });
   const [taskForm, setTaskForm] = useState({ title: "", priority: "medium", dueDate: "" });
@@ -234,12 +356,19 @@ function App() {
     recurring: false,
     recurrenceMinutes: "",
   });
+  const [habitForm, setHabitForm] = useState({ name: "" });
 
   /* ─── Confirm / Edit Dialog State ─── */
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [editDialog, setEditDialog] = useState(null);
 
   const searchRef = useRef(null);
+
+  /* ─── Dark Mode Toggle ─── */
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("hub_dark_mode", darkMode);
+  }, [darkMode]);
 
   /* ─── Toast System ─── */
   const addToast = useCallback((message, kind = "info") => {
@@ -271,7 +400,10 @@ function App() {
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
     if (!response.ok) {
       const detail = data?.detail || text || response.statusText;
-      if (response.status === 401 && !apiKey.trim()) window.location.href = "/";
+      if (response.status === 401) {
+        window.location.href = "/";
+        return;
+      }
       throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
     }
     return data;
@@ -281,9 +413,10 @@ function App() {
   async function refreshAll() {
     try {
       setBusy(true);
-      const [cap, tsk, nts, rem, ibx, sum] = await Promise.all([
+      const [cap, tsk, nts, rem, ibx, sum, hab] = await Promise.all([
         api("/api/captures"), api("/api/tasks"), api("/api/notes"),
         api("/api/reminders"), api("/api/inbox"), api("/api/summary/today"),
+        api("/api/habits"),
       ]);
       setCaptures(cap || []);
       setTasks(tsk || []);
@@ -291,6 +424,7 @@ function App() {
       setReminders(rem || []);
       setInboxItems(ibx || []);
       setSummary(sum || null);
+      setHabits(hab || []);
     } catch (err) {
       setAppStatus(`Load failed: ${err.message}`, "error");
     } finally {
@@ -331,7 +465,8 @@ function App() {
       if (e.key === "?") { setShowShortcuts((v) => !v); return; }
       if (e.key === "/") { e.preventDefault(); searchRef.current?.focus(); return; }
       if (e.key === "r" && !e.ctrlKey && !e.metaKey) { refreshAll(); return; }
-      const navKeys = { "1": "summary", "2": "captures", "3": "inbox", "4": "tasks", "5": "notes", "6": "reminders", "7": "settings" };
+      if (e.key === "d" && !e.ctrlKey && !e.metaKey) { setDarkMode(v => !v); return; }
+      const navKeys = { "1": "summary", "2": "captures", "3": "inbox", "4": "tasks", "5": "notes", "6": "reminders", "7": "habits", "8": "pomodoro", "9": "settings" };
       if (navKeys[e.key]) { openSection(navKeys[e.key]); return; }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -402,9 +537,21 @@ function App() {
 
   async function toggleTask(item) {
     try {
+      const nextStatus = item.status === "done" ? "todo" : item.status === "todo" ? "in_progress" : "done";
       await api(`/api/tasks/${item.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status: item.status === "done" ? "todo" : "done" }),
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      await refreshAll();
+      setAppStatus("Task updated.", "success");
+    } catch (err) { setAppStatus(`Update failed: ${err.message}`, "error"); }
+  }
+
+  async function setTaskStatus(item, status) {
+    try {
+      await api(`/api/tasks/${item.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
       });
       await refreshAll();
       setAppStatus("Task updated.", "success");
@@ -426,8 +573,11 @@ function App() {
       title: "Edit Task",
       fields: [
         { key: "title", label: "Title", type: "text", placeholder: "Task title" },
+        { key: "priority", label: "Priority", type: "select", options: [
+          { value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }
+        ]},
       ],
-      values: { title: t.title },
+      values: { title: t.title, priority: t.priority },
       onSave: async (vals) => {
         try {
           await api(`/api/tasks/${t.id}`, { method: "PATCH", body: JSON.stringify(vals) });
@@ -556,6 +706,50 @@ function App() {
     return Boolean(item?.file_id && ["photo", "sticker", "animation"].includes(item.item_type));
   }
 
+  /* ─── Habits ─── */
+  async function submitHabit(e) {
+    e.preventDefault();
+    try {
+      await api("/api/habits", { method: "POST", body: JSON.stringify(habitForm) });
+      setHabitForm({ name: "" });
+      await refreshAll();
+      setAppStatus("Habit created.", "success");
+    } catch (err) { setAppStatus(`Habit failed: ${err.message}`, "error"); }
+  }
+
+  async function toggleHabit(id) {
+    try {
+      await api(`/api/habits/${id}/toggle`, { method: "POST", body: JSON.stringify({}) });
+      await refreshAll();
+    } catch (err) { setAppStatus(`Toggle failed: ${err.message}`, "error"); }
+  }
+
+  async function deleteHabit(id) {
+    confirmAction("Remove this habit?", async () => {
+      try {
+        await api(`/api/habits/${id}`, { method: "DELETE" });
+        await refreshAll();
+        setAppStatus("Habit removed.", "success");
+      } catch (err) { setAppStatus(`Delete failed: ${err.message}`, "error"); }
+    });
+  }
+
+  /* ─── Export ─── */
+  async function exportData() {
+    try {
+      setAppStatus("Preparing export…", "info");
+      const resp = await api("/api/export");
+      const blob = new Blob([JSON.stringify(resp, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `automation_hub_export_${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setAppStatus("Export downloaded.", "success");
+    } catch (err) { setAppStatus(`Export failed: ${err.message}`, "error"); }
+  }
+
   async function logout() {
     await fetch("/auth/logout", { method: "POST" });
     window.location.href = "/";
@@ -597,9 +791,22 @@ function App() {
 
   /* ─── Computed stats ─── */
   const tasksDone = tasks.filter(t => t.status === "done").length;
+  const tasksInProgress = tasks.filter(t => t.status === "in_progress").length;
   const tasksTotal = tasks.length;
   const remindersSent = reminders.filter(r => r.status === "sent").length;
   const remindersTotal = reminders.length;
+  const habitsCompletedToday = habits.filter(h => h.completed_today).length;
+
+  /* ─── Activity Feed (for overview) ─── */
+  const activityFeed = useMemo(() => {
+    const items = [];
+    captures.slice(0, 5).forEach(c => items.push({ type: "capture", title: c.content, time: c.created_at, icon: "pen-line" }));
+    tasks.slice(0, 5).forEach(t => items.push({ type: "task", title: t.title, time: t.created_at, icon: "check-square", extra: t.status }));
+    notes.slice(0, 3).forEach(n => items.push({ type: "note", title: n.title || "Untitled Note", time: n.updated_at, icon: "file-lock" }));
+    reminders.filter(r => r.sent_at).slice(0, 3).forEach(r => items.push({ type: "reminder", title: r.message, time: r.sent_at, icon: "bell", extra: "sent" }));
+    items.sort((a, b) => new Date(b.time) - new Date(a.time));
+    return items.slice(0, 10);
+  }, [captures, tasks, notes, reminders]);
 
   /* ─── Render Helpers ─── */
   function renderEmptyState(iconName, title, hint, actionLabel = "", onAction) {
@@ -651,7 +858,8 @@ function App() {
               ["?", "Toggle this panel"],
               ["/", "Focus search bar"],
               ["R", "Refresh all data"],
-              ["1–7", "Switch sections"],
+              ["D", "Toggle dark mode"],
+              ["1–9", "Switch sections"],
               ["Esc", "Close menu / modal"],
             ].map(([key, desc]) => html`
               <div className="shortcut-row">
@@ -693,11 +901,15 @@ function App() {
                 ${item.id === "inbox" && inboxItems.length > 0 ? html`<span className="nav-badge pulse-badge">${inboxItems.length}</span>` : ""}
                 ${item.id === "tasks" && tasks.filter(t => t.status !== "done").length > 0 ? html`<span className="nav-badge">${tasks.filter(t => t.status !== "done").length}</span>` : ""}
                 ${item.id === "reminders" && reminders.filter(r => r.status === "pending").length > 0 ? html`<span className="nav-badge">${reminders.filter(r => r.status === "pending").length}</span>` : ""}
+                ${item.id === "habits" && habits.length > 0 ? html`<span className="nav-badge">${habitsCompletedToday}/${habits.length}</span>` : ""}
               </button>
             `)}
           </nav>
 
           <div className="sidebar-footer">
+            <button className="nav-link" onClick=${() => setDarkMode(v => !v)}>
+              <${Icon} name=${darkMode ? "sun" : "moon"} size=${18} /> ${darkMode ? "Light Mode" : "Dark Mode"}
+            </button>
             <button className="nav-link" onClick=${() => setShowShortcuts(true)}>
               <${Icon} name="keyboard" size=${18} /> Shortcuts
               <span className="nav-badge" style=${{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)" }}>?</span>
@@ -723,7 +935,7 @@ function App() {
               </div>
             </div>
             <div className="topbar-right">
-              ${section !== "summary" && section !== "settings" ? html`
+              ${!["summary", "settings", "pomodoro", "habits"].includes(section) ? html`
                 <div className="search-bar">
                   <${Icon} name="search" size=${16} />
                   <input
@@ -774,6 +986,16 @@ function App() {
                   <div className="summary-card-label">Sent Today</div>
                   <div className="summary-card-value">${summary?.reminders_sent_today ?? 0}</div>
                 </article>
+                <article className="summary-card card-green">
+                  <div className="summary-card-icon"><${Icon} name="file-lock" size=${20} /></div>
+                  <div className="summary-card-label">Total Notes</div>
+                  <div className="summary-card-value">${summary?.notes_total ?? 0}</div>
+                </article>
+                <article className="summary-card card-amber">
+                  <div className="summary-card-icon"><${Icon} name="target" size=${20} /></div>
+                  <div className="summary-card-label">Habits Today</div>
+                  <div className="summary-card-value">${habitsCompletedToday}/${habits.length || 0}</div>
+                </article>
               </div>
             </section>
 
@@ -785,13 +1007,13 @@ function App() {
               </div>
               <div className="progress-grid">
                 <${ProgressBar} value=${tasksDone} max=${tasksTotal} label="Tasks Completed" color="var(--green-500)" />
+                <${ProgressBar} value=${tasksInProgress} max=${tasksTotal} label="Tasks In Progress" color="var(--amber-600)" />
                 <${ProgressBar} value=${remindersSent} max=${remindersTotal} label="Reminders Delivered" color="var(--blue-600)" />
-                <${ProgressBar} value=${captures.length} max=${Math.max(captures.length, 10)} label="Captures Collected" color="var(--amber-600)" />
-                <${ProgressBar} value=${notes.length} max=${Math.max(notes.length, 5)} label="Notes Stored" color="var(--teal-600)" />
+                <${ProgressBar} value=${habitsCompletedToday} max=${habits.length || 1} label="Habits Done Today" color="var(--teal-600)" />
               </div>
             </section>
 
-            <!-- Quick Capture on Summary -->
+            <!-- Quick Actions -->
             <section className="panel section-panel">
               <div className="section-head">
                 <h2><${Icon} name="zap" /> Quick Actions</h2>
@@ -811,31 +1033,29 @@ function App() {
               </div>
             </section>
 
-            <!-- Recent Activity -->
-            ${captures.length > 0 && html`
+            <!-- Activity Feed -->
+            ${activityFeed.length > 0 && html`
               <section className="panel section-panel">
                 <div className="section-head">
-                  <h2><${Icon} name="clock" /> Recent Captures</h2>
-                  <p className="muted">Latest items from your capture stream.</p>
+                  <h2><${Icon} name="activity" /> Recent Activity</h2>
+                  <p className="muted">Timeline of your latest actions across all modules.</p>
                 </div>
                 <div className="list">
-                  ${captures.slice(0, 5).map(c => html`
-                    <div className="list-item" key=${c.id}>
+                  ${activityFeed.map((item, i) => html`
+                    <div className="list-item" key=${i}>
                       <div className="list-item-content">
-                        <div className="list-item-title">${c.content}</div>
+                        <div className="list-item-title">
+                          <${Icon} name=${item.icon} size=${14} /> ${item.title.length > 80 ? item.title.substring(0, 80) + "…" : item.title}
+                        </div>
                         <div className="list-item-meta">
-                          ${c.url ? html`<span><${Icon} name="link" size=${12} /> ${c.url.length > 40 ? c.url.substring(0, 40) + "…" : c.url}</span>` : ""}
-                          <span>${relativeTime(c.created_at)}</span>
+                          <span className=${`status-badge ${item.extra || item.type}`}>${item.type}</span>
+                          ${item.extra ? html`<span className=${`status-badge ${item.extra}`}>${item.extra}</span>` : ""}
+                          <span>${relativeTime(item.time)}</span>
                         </div>
                       </div>
                     </div>
                   `)}
                 </div>
-                ${captures.length > 5 ? html`
-                  <div style=${{ marginTop: "0.75rem", textAlign: "center" }}>
-                    <button className="ghost sm" onClick=${() => openSection("captures")}>View All ${captures.length} Captures →</button>
-                  </div>
-                ` : ""}
               </section>
             `}
           `}
@@ -970,9 +1190,9 @@ function App() {
               </form>
 
               <div className="filter-row" style=${{ marginTop: "1rem" }}>
-                ${["all", "todo", "done"].map(f => html`
+                ${["all", "todo", "in_progress", "done"].map(f => html`
                   <button key=${f} className=${`ghost sm ${taskFilter === f ? "active" : ""}`} onClick=${() => setTaskFilter(f)}>
-                    ${f === "all" ? "All" : f === "todo" ? "To Do" : "Done"} ${f !== "all" ? `(${tasks.filter(t => t.status === f).length})` : `(${tasks.length})`}
+                    ${f === "all" ? "All" : f === "todo" ? "To Do" : f === "in_progress" ? "In Progress" : "Done"} ${f !== "all" ? `(${tasks.filter(t => t.status === f).length})` : `(${tasks.length})`}
                   </button>
                 `)}
               </div>
@@ -990,20 +1210,27 @@ function App() {
                     ${filteredTasks.map(t => html`
                       <div className="list-item" key=${t.id}>
                         <button
-                          className=${`btn-icon ${t.status === "done" ? "success-ghost" : "ghost"}`}
+                          className=${`btn-icon ${t.status === "done" ? "success-ghost" : t.status === "in_progress" ? "ghost" : "ghost"}`}
                           onClick=${() => toggleTask(t)}
-                          title=${t.status === "done" ? "Mark as Todo" : "Mark as Done"}
+                          title=${t.status === "done" ? "Mark as Todo" : t.status === "todo" ? "Start Working" : "Mark as Done"}
                           style=${{ flexShrink: 0 }}
                         >
-                          <${Icon} name=${t.status === "done" ? "check" : "check-square"} size=${16} />
+                          <${Icon} name=${t.status === "done" ? "check" : t.status === "in_progress" ? "loader" : "check-square"} size=${16} />
                         </button>
                         <div className="list-item-content">
                           <div className=${`list-item-title ${t.status === "done" ? "done" : ""}`}>${t.title}</div>
                           <div className="list-item-meta">
                             <span className=${`priority-badge ${t.priority}`}>${t.priority}</span>
-                            <span className=${`status-badge ${t.status}`}>${t.status}</span>
+                            <span className=${`status-badge ${t.status}`}>${t.status === "in_progress" ? "in progress" : t.status}</span>
                             ${t.due_date ? html`<span><${Icon} name="clock" size=${12} /> ${formatDateShort(t.due_date)}</span>` : ""}
                           </div>
+                          ${t.status !== "done" ? html`
+                            <div className="task-quick-status" style=${{ marginTop: "0.35rem" }}>
+                              ${t.status !== "todo" ? html`<button className="ghost sm" onClick=${() => setTaskStatus(t, "todo")}><${Icon} name="undo" size=${11} /> To Do</button>` : ""}
+                              ${t.status !== "in_progress" ? html`<button className="ghost sm" onClick=${() => setTaskStatus(t, "in_progress")}><${Icon} name="loader" size=${11} /> In Progress</button>` : ""}
+                              ${t.status !== "done" ? html`<button className="success-ghost sm" onClick=${() => setTaskStatus(t, "done")}><${Icon} name="check" size=${11} /> Done</button>` : ""}
+                            </div>
+                          ` : ""}
                         </div>
                         <div className="list-item-actions">
                           <button className="btn-icon ghost sm" onClick=${() => editTask(t)} title="Edit">
@@ -1125,7 +1352,7 @@ function App() {
                           <div className="list-item-meta">
                             <span className=${`status-badge ${r.status}`}>${r.status}</span>
                             <span><${Icon} name="send" size=${12} /> ${r.channel} → ${r.target}</span>
-                            <span><${Icon} name="clock" size=${12} /> ${formatDate(r.remind_at)}</span>
+                            <span><${Icon} name="clock" size=${12} /> ${formatDate(r.remind_at)} (${relativeTime(r.remind_at)})</span>
                             ${r.is_recurring ? html`<span><${Icon} name="repeat" size=${12} /> every ${r.recurrence_minutes}m</span>` : ""}
                             ${r.last_error ? html`<span className="error-text" title=${r.last_error}>⚠ error</span>` : ""}
                           </div>
@@ -1147,6 +1374,57 @@ function App() {
               </div>
             </section>
           `}
+
+          <!-- ═══ HABITS SECTION ═══ -->
+          ${section === "habits" && html`
+            <section className="panel section-panel" id="section-habits">
+              <div className="section-head">
+                <h2><${Icon} name="target" /> Habit Tracker</h2>
+                <p className="muted">Build consistency with daily habit tracking and streak counting.</p>
+              </div>
+              <form onSubmit=${submitHabit} className="quick-capture-bar">
+                <${Icon} name="plus" size=${18} />
+                <input required value=${habitForm.name} onInput=${(e) => setHabitForm({ ...habitForm, name: e.target.value })} placeholder="New habit name… (e.g., Exercise, Read, Meditate)" />
+                <button type="submit" className="sm" disabled=${busy}><${Icon} name="plus" size=${14} /> Add Habit</button>
+              </form>
+
+              <div style=${{ marginTop: "1.25rem" }}>
+                ${habits.length > 0 ? html`
+                  <div className="habits-grid">
+                    ${habits.map(h => html`
+                      <div className=${`habit-card ${h.completed_today ? "completed" : ""}`} key=${h.id}>
+                        <div className="habit-card-main" onClick=${() => toggleHabit(h.id)}>
+                          <div className=${`habit-check ${h.completed_today ? "checked" : ""}`}>
+                            ${h.completed_today ? html`<${Icon} name="check" size=${18} />` : ""}
+                          </div>
+                          <div className="habit-info">
+                            <div className="habit-name">${h.name}</div>
+                            <div className="habit-streak">
+                              <${Icon} name="flame" size=${12} />
+                              ${h.streak > 0 ? `${h.streak} day streak` : "No streak yet"}
+                            </div>
+                          </div>
+                        </div>
+                        <button className="btn-icon danger-ghost sm" onClick=${() => deleteHabit(h.id)} title="Remove">
+                          <${Icon} name="x" size=${14} />
+                        </button>
+                      </div>
+                    `)}
+                  </div>
+                ` : renderEmptyState("target", "No habits yet", "Create your first habit to start tracking daily consistency.", "Focus Form", () => document.querySelector(".quick-capture-bar input")?.focus())}
+              </div>
+
+              ${habits.length > 0 ? html`
+                <div className="habit-summary-bar">
+                  <span><${Icon} name="target" size=${14} /> ${habitsCompletedToday} of ${habits.length} completed today</span>
+                  <${ProgressBar} value=${habitsCompletedToday} max=${habits.length} label="" color="var(--green-500)" />
+                </div>
+              ` : ""}
+            </section>
+          `}
+
+          <!-- ═══ POMODORO SECTION ═══ -->
+          ${section === "pomodoro" && html`<${PomodoroTimer} addToast=${addToast} />`}
 
           <!-- ═══ SETTINGS SECTION ═══ -->
           ${section === "settings" && html`
@@ -1174,6 +1452,20 @@ function App() {
                 <div className="sidebar-divider" style=${{ margin: "0.5rem 0" }}></div>
 
                 <div>
+                  <div className="field-label">Appearance</div>
+                  <div className="flex-row">
+                    <button className=${`ghost sm ${!darkMode ? "active" : ""}`} onClick=${() => setDarkMode(false)}>
+                      <${Icon} name="sun" size=${14} /> Light
+                    </button>
+                    <button className=${`ghost sm ${darkMode ? "active" : ""}`} onClick=${() => setDarkMode(true)}>
+                      <${Icon} name="moon" size=${14} /> Dark
+                    </button>
+                  </div>
+                </div>
+
+                <div className="sidebar-divider" style=${{ margin: "0.5rem 0" }}></div>
+
+                <div>
                   <div className="field-label">Density</div>
                   <div className="flex-row">
                     <button className=${`ghost sm ${density === "comfortable" ? "active" : ""}`} onClick=${() => setDensity("comfortable")}>Comfortable</button>
@@ -1190,6 +1482,15 @@ function App() {
                     <input type="checkbox" checked=${autoRefresh} onChange=${(e) => setAutoRefresh(e.target.checked)} />
                     Enable auto-refresh
                   </label>
+                </div>
+
+                <div className="sidebar-divider" style=${{ margin: "0.5rem 0" }}></div>
+
+                <div>
+                  <div className="field-label">Data Management</div>
+                  <button className="ghost" onClick=${exportData}>
+                    <${Icon} name="download" size=${16} /> Export All Data (JSON)
+                  </button>
                 </div>
 
                 <div className="sidebar-divider" style=${{ margin: "0.5rem 0" }}></div>

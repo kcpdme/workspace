@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -20,6 +20,7 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="todo", nullable=False)
     priority: Mapped[str] = mapped_column(String(32), default="medium", nullable=False)
     due_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -113,3 +114,24 @@ class TelegramInboxItem(Base):
     raw_json: Mapped[str] = mapped_column(Text, default="", nullable=False)
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
+class Habit(Base):
+    __tablename__ = "habits"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    icon: Mapped[str] = mapped_column(String(32), default="check", nullable=False)
+    color: Mapped[str] = mapped_column(String(32), default="green", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class HabitLog(Base):
+    __tablename__ = "habit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    habit_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    log_date: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    completed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

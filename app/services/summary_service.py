@@ -25,10 +25,19 @@ def get_today_summary(db: Session) -> SummaryOut:
         .scalar()
         or 0
     )
+    notes_total = db.query(func.count(models.EncryptedNote.id)).scalar() or 0
+    tasks_done_today = (
+        db.query(func.count(models.Task.id))
+        .filter(models.Task.status == "done")
+        .scalar()
+        or 0
+    )
 
     return SummaryOut(
         captures_today=captures_today,
         tasks_open=tasks_open,
         reminders_pending=reminders_pending,
         reminders_sent_today=reminders_sent_today,
+        notes_total=notes_total,
+        tasks_done_today=tasks_done_today,
     )
