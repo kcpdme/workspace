@@ -37,6 +37,7 @@ from app import models
 from app.config import settings
 from app.database import SessionLocal, engine, init_db
 from app.routes.api import router as api_router
+from app.routes.miniapp import router as miniapp_router
 from app.routes.web import router as web_router
 from app.services.api_keys import ensure_bootstrap_api_key
 from app.services.daily_digest import maybe_send_daily_digest
@@ -140,6 +141,29 @@ async def lifespan(app: FastAPI):
     elif settings.telegram_bot_polling_enabled and settings.telegram_bot_token:
         telegram_bot_worker.start()
 
+    # Auto-register the Mini App menu button with Telegram if miniapp_url is set.
+    if settings.miniapp_url and settings.telegram_bot_token:
+        try:
+            import httpx as _httpx
+            _resp = _httpx.post(
+                f"https://api.telegram.org/bot{settings.telegram_bot_token}/setChatMenuButton",
+                json={
+                    "menu_button": {
+                        "type": "web_app",
+                        "text": "🚀 Open Dashboard",
+                        "web_app": {"url": settings.miniapp_url},
+                    }
+                },
+                timeout=10,
+            )
+            _data = _resp.json()
+            if _data.get("ok"):
+                print(f"[miniapp] Menu button registered: {settings.miniapp_url}")
+            else:
+                print(f"[miniapp] Menu button registration failed: {_data}")
+        except Exception as _exc:
+            print(f"[miniapp] Menu button registration error: {_exc}")
+
     yield  # ── Application running ──
 
     # ── Shutdown ──
@@ -173,6 +197,7 @@ app.add_middleware(
 )
 
 app.include_router(web_router)
+app.include_router(miniapp_router)
 app.include_router(api_router)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

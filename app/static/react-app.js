@@ -7,6 +7,17 @@ const rootEl = document.getElementById("root");
 const defaultTarget = rootEl?.dataset?.defaultTelegramTarget || "";
 const keyStorage = "automation_hub_api_key";
 
+// ─── Mini App mode detection ───────────────────────────────────────────────
+// When served via /miniapp the <div id="root"> has data-miniapp-mode="true".
+// In this mode the API key comes from sessionStorage (set by miniapp auth).
+const isMiniApp = rootEl?.dataset?.miniappMode === "true";
+const tgWebApp = window.Telegram?.WebApp || null;
+const miniAppUser = (() => {
+  try { return JSON.parse(sessionStorage.getItem("miniapp_user") || "{}"); }
+  catch { return {}; }
+})();
+
+
 /* ─── SVG Icon components (inline Lucide-style) ─── */
 function Icon({ name, size = 18 }) {
   const s = size;
@@ -326,9 +337,14 @@ function PomodoroTimer({ addToast }) {
 function App() {
   const [section, setSection] = useState(localStorage.getItem("hub_section") || "summary");
   const [density, setDensity] = useState(localStorage.getItem("hub_density") || "comfortable");
-  const [darkMode, setDarkMode] = useState(localStorage.getItem("hub_dark_mode") === "true");
+  const [darkMode, setDarkMode] = useState(isMiniApp ? true : localStorage.getItem("hub_dark_mode") === "true");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [apiKey, setApiKey] = useState(localStorage.getItem(keyStorage) || "");
+  // Mini App mode: read API key from sessionStorage (set by miniapp.html auth handshake).
+  const [apiKey, setApiKey] = useState(
+    isMiniApp
+      ? sessionStorage.getItem(keyStorage) || ""
+      : localStorage.getItem(keyStorage) || ""
+  );
   const [status, setStatus] = useState("");
   const [statusKind, setStatusKind] = useState("info");
   const [busy, setBusy] = useState(false);
@@ -394,16 +410,18 @@ function App() {
   async function api(path, options = {}) {
     const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
     if (apiKey.trim()) headers["X-API-Key"] = apiKey.trim();
-    // Include CSRF token for session-authenticated browser requests.
-    const csrfToken = document.cookie.split('; ').find(r => r.startsWith('csrf_token='))?.split('=')[1];
-    if (csrfToken && !apiKey.trim()) headers["X-CSRF-Token"] = csrfToken;
+    // Include CSRF token for session-authenticated browser requests (non-Mini App).
+    if (!isMiniApp) {
+      const csrfToken = document.cookie.split('; ').find(r => r.startsWith('csrf_token='))?.split('=')[1];
+      if (csrfToken && !apiKey.trim()) headers["X-CSRF-Token"] = csrfToken;
+    }
     const response = await fetch(path, { ...options, headers });
     const text = await response.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
     if (!response.ok) {
       const detail = data?.detail || text || response.statusText;
-      if (response.status === 401) {
+      if (response.status === 401 && !isMiniApp) {
         window.location.href = "/";
         return;
       }
@@ -768,6 +786,13 @@ function App() {
   }
 
   async function logout() {
+    if (isMiniApp) {
+      // In Mini App mode, close the app instead of navigating.
+      sessionStorage.removeItem(keyStorage);
+      sessionStorage.removeItem("miniapp_user");
+      tgWebApp?.close?.();
+      return;
+    }
     await fetch("/auth/logout", { method: "POST" });
     window.location.href = "/";
   }
@@ -931,6 +956,19 @@ function App() {
               <${Icon} name="keyboard" size=${18} /> Shortcuts
               <span className="nav-badge" style=${{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)" }}>?</span>
             </button>
+            ${isMiniApp ? html`
+              <div className="nav-link" style=${{ cursor: "default", opacity: 0.7, fontSize: "0.8rem" }}>
+                <${Icon} name="zap" size=${14} />
+                ${miniAppUser.first_name || "Telegram User"}
+              </div>
+              <button className="nav-link" onClick=${logout} style=${{ color: "var(--text-dim)" }}>
+                <${Icon} name="x" size=${16} /> Close App
+              </button>
+            ` : html`
+              <button className="nav-link" onClick=${logout} style=${{ color: "var(--red-400, #f87171)" }}>
+                <${Icon} name="log-out" size=${16} /> Logout
+              </button>
+            `}
           </div>
         </aside>
 

@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
     telegram_webhook_secret: str = ""
 
+    # Public HTTPS URL of the Telegram Mini App, e.g. https://hub.kcpd.top/miniapp
+    # Used to generate the "Open Dashboard" button in bot messages and set the menu button.
+    # If empty, the server auto-detects base URL (works fine behind Cloudflare tunnel).
+    miniapp_url: str = "https://hub.kcpd.top/miniapp"
+
     notes_encryption_key: str = ""
 
     # E-mail channel (optional). Fill to enable reminders via email.

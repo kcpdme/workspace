@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="AutoHub — Personal Automation Dashboard via Telegram Mini App" />
+    <title>{{ title }}</title>
+
+    <!-- Telegram Mini App SDK — MUST be first -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+
+    <style>
+      :root {
+        --tg-bg: var(--tg-theme-bg-color, #0f1a12);
+        --tg-text: var(--tg-theme-text-color, #e6f4ea);
+        --tg-hint: var(--tg-theme-hint-color, #8aab91);
+        --tg-link: var(--tg-theme-link-color, #4caf73);
+        --tg-button-bg: var(--tg-theme-button-color, #2d7a4f);
+        --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+        --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #162119);
+        --green-500: #3db866;
+        --green-600: #2d7a4f;
+        --radius: 16px;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        height: 100%;
+        overflow: hidden;
+        background: var(--tg-bg);
+        color: var(--tg-text);
+        font-family: 'Manrope', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ── Loading Screen ── */
+      #miniapp-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        background: var(--tg-bg);
+        z-index: 9999;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+      }
+
+      #miniapp-loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .loader-logo {
+        width: 72px;
+        height: 72px;
+        background: linear-gradient(135deg, var(--green-600), #1a4d30);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 32px rgba(45, 122, 79, 0.4);
+        animation: pulse-logo 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse-logo {
+        0%, 100% { box-shadow: 0 8px 32px rgba(45, 122, 79, 0.4); transform: scale(1); }
+        50% { box-shadow: 0 12px 48px rgba(45, 122, 79, 0.7); transform: scale(1.04); }
+      }
+
+      .loader-logo svg {
+        width: 36px;
+        height: 36px;
+        stroke: #fff;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .loader-title {
+        font-family: 'Sora', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--tg-text);
+        letter-spacing: -0.5px;
+      }
+
+      .loader-subtitle {
+        font-size: 0.875rem;
+        color: var(--tg-hint);
+        text-align: center;
+        max-width: 240px;
+        line-height: 1.5;
+      }
+
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid rgba(61, 184, 102, 0.15);
+        border-top-color: var(--green-500);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* ── Error Screen ── */
+      #miniapp-error {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 2rem;
+        background: var(--tg-bg);
+        z-index: 9999;
+        text-align: center;
+      }
+
+      #miniapp-error.visible { display: flex; }
+
+      .error-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(239, 68, 68, 0.12);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+      }
+
+      .error-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--tg-text);
+      }
+
+      .error-message {
+        font-size: 0.875rem;
+        color: var(--tg-hint);
+        line-height: 1.6;
+        max-width: 280px;
+      }
+
+      .error-user-id {
+        font-family: monospace;
+        font-size: 0.8rem;
+        background: var(--tg-secondary-bg);
+        padding: 0.4rem 0.75rem;
+        border-radius: 8px;
+        color: var(--tg-text);
+        word-break: break-all;
+      }
+
+      /* ── App Frame ── */
+      #miniapp-frame {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: none;
+        background: var(--tg-bg);
+      }
+
+      #miniapp-frame.visible { display: block; }
+
+      /* ── App Root (for embedded React) ── */
+      #root {
+        position: fixed;
+        inset: 0;
+        overflow: auto;
+        background: var(--tg-bg);
+        display: none;
+      }
+
+      #root.visible { display: block; }
+    </style>
+  </head>
+  <body>
+
+    <!-- Loading Screen -->
+    <div id="miniapp-loader">
+      <div class="loader-logo">
+        <svg viewBox="0 0 24 24">
+          <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </div>
+      <div class="loader-title">AutoHub</div>
+      <div class="loader-subtitle" id="loader-status">Authenticating with Telegram…</div>
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Error Screen -->
+    <div id="miniapp-error">
+      <div class="error-icon">🔒</div>
+      <div class="error-title" id="error-title">Access Denied</div>
+      <div class="error-message" id="error-message">Your Telegram account is not on the allowlist. Ask the admin to add you.</div>
+      <div class="error-user-id" id="error-user-id" style="display:none;"></div>
+    </div>
+
+    <!-- App Root (React mounts here) -->
+    <div id="root" data-default-telegram-target="" data-miniapp-mode="true"></div>
+
+    <script type="module">
+      const tg = window.Telegram?.WebApp;
+      const loader = document.getElementById('miniapp-loader');
+      const loaderStatus = document.getElementById('loader-status');
+      const errorDiv = document.getElementById('miniapp-error');
+      const errorTitle = document.getElementById('error-title');
+      const errorMsg = document.getElementById('error-message');
+      const errorUserId = document.getElementById('error-user-id');
+      const appRoot = document.getElementById('root');
+
+      function showError(title, message, userId) {
+        loader.classList.add('hidden');
+        errorTitle.textContent = title;
+        errorMsg.textContent = message;
+        if (userId) {
+          errorUserId.textContent = 'Your ID: ' + userId;
+          errorUserId.style.display = 'block';
+        }
+        errorDiv.classList.add('visible');
+        // Show close button so user can dismiss.
+        tg?.MainButton?.hide?.();
+        tg?.BackButton?.show?.();
+        tg?.BackButton?.onClick?.(() => tg?.close?.());
+      }
+
+      async function init() {
+        // Expand to full height immediately.
+        if (tg) {
+          tg.expand();
+          tg.ready();
+          tg.setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--tg-bg').trim() || '#0f1a12');
+          tg.setHeaderColor('#0f1a12');
+        }
+
+        const initData = tg?.initData || '';
+
+        // Dev/browser fallback: if no Telegram context, show helpful message.
+        if (!initData) {
+          showError(
+            '⚠️ Open in Telegram',
+            'This Mini App must be opened from inside the Telegram app via the bot. Open the bot and tap "🚀 Open Dashboard".',
+            null
+          );
+          return;
+        }
+
+        loaderStatus.textContent = 'Verifying identity…';
+
+        try {
+          const resp = await fetch('/miniapp/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ init_data: initData }),
+          });
+
+          const data = await resp.json();
+
+          if (!resp.ok) {
+            const userId = tg?.initDataUnsafe?.user?.id;
+            showError(
+              'Access Denied',
+              data.detail || 'Your account is not authorized. Ask the admin to whitelist your Telegram ID.',
+              userId ? String(userId) : null
+            );
+            return;
+          }
+
+          // Store API key in sessionStorage — React app will pick it up.
+          sessionStorage.setItem('automation_hub_api_key', data.api_key);
+          sessionStorage.setItem('miniapp_user', JSON.stringify(data.user || {}));
+
+          // Patch root dataset with default telegram target.
+          const userId = data.user?.id || tg?.initDataUnsafe?.user?.id || '';
+          appRoot.dataset.defaultTelegramTarget = String(userId);
+
+          loaderStatus.textContent = 'Loading dashboard…';
+
+          // Dynamically import the React app.
+          // The React app detects miniapp mode via appRoot.dataset.miniappMode.
+          await import('/static/react-app.js?v=20260413e');
+
+          // Small delay so React can mount.
+          await new Promise(r => setTimeout(r, 300));
+
+          loader.classList.add('hidden');
+          appRoot.classList.add('visible');
+
+        } catch (err) {
+          showError('Connection Error', 'Could not connect to the server: ' + err.message, null);
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

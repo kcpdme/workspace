@@ -124,7 +124,7 @@ class TelegramBotWorker:
                 try:
                     params: dict = {
                         "timeout": max(settings.telegram_bot_poll_timeout_seconds, 5),
-                        "allowed_updates": '["message"]',
+                        "allowed_updates": '["message","web_app_data"]',
                     }
                     if self._offset:
                         params["offset"] = self._offset
@@ -164,7 +164,25 @@ def _send_text(client: httpx.Client, base_url: str, chat_id: str, text: str) -> 
 
 
 def _send_menu(client: httpx.Client, base_url: str, chat_id: str, text: str = "Choose an action:") -> None:
-    keyboard = {
+    """Send a reply keyboard menu AND an inline 'Open Dashboard' web_app button."""
+    miniapp_url = settings.miniapp_url or ""
+
+    # Inline keyboard with Mini App button (shown above text input).
+    inline_markup = None
+    if miniapp_url:
+        inline_markup = {
+            "inline_keyboard": [
+                [
+                    {
+                        "text": "🚀 Open Dashboard",
+                        "web_app": {"url": miniapp_url},
+                    }
+                ]
+            ]
+        }
+
+    # Reply keyboard for quick command shortcuts.
+    reply_keyboard = {
         "keyboard": [
             [{"text": "/summary"}, {"text": "/task list"}],
             [{"text": "/note list"}, {"text": "/inbox list"}],
@@ -175,10 +193,22 @@ def _send_menu(client: httpx.Client, base_url: str, chat_id: str, text: str = "C
         "one_time_keyboard": False,
     }
     try:
-        client.post(
-            f"{base_url}/sendMessage",
-            json={"chat_id": chat_id, "text": text, "reply_markup": keyboard},
-        )
+        # First send the inline keyboard with the Mini App button.
+        if inline_markup:
+            client.post(
+                f"{base_url}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": text,
+                    "reply_markup": inline_markup,
+                    "parse_mode": "HTML",
+                },
+            )
+        else:
+            client.post(
+                f"{base_url}/sendMessage",
+                json={"chat_id": chat_id, "text": text, "reply_markup": reply_keyboard},
+            )
     except Exception:
         pass
 
@@ -269,14 +299,17 @@ def _handle_message(
             return
 
         if lowered in {"/start", "/help", "/menu"}:
+            miniapp_url = settings.miniapp_url or ""
+            miniapp_hint = f"\n\n🚀 <b>Tap the button above to open the full dashboard</b> inside Telegram." if miniapp_url else ""
             _send_menu(
                 client, base_url, chat_id,
-                "Commands:\n"
+                "<b>AutoHub Commands</b>\n"
                 "/id\n/menu\n/summary\n"
-                "/note add <content>\n/note list\n"
-                "/task add <title>\n/task done <id or partial title>\n/task list\n"
-                "/capture <text>\n/inbox list\n"
-                "/reminder list\n/remind <minutes> <message>",
+                "/note add &lt;content&gt;\n/note list\n"
+                "/task add &lt;title&gt;\n/task done &lt;id or partial title&gt;\n/task list\n"
+                "/capture &lt;text&gt;\n/inbox list\n"
+                "/reminder list\n/remind &lt;minutes&gt; &lt;message&gt;"
+                + miniapp_hint,
             )
             return
 
