@@ -45,7 +45,49 @@ fi
 
 # ── Run Alembic migrations ───────────────────────────────────────────────────
 echo "[startup] Running database migrations..."
-alembic upgrade head
+python - <<'EOF'
+from sqlalchemy import create_engine, inspect
+from app.config import settings
+
+engine = create_engine(settings.database_url)
+with engine.connect() as conn:
+    inspector = inspect(conn)
+    has_alembic_version = inspector.has_table("alembic_version")
+    user_tables = [t for t in inspector.get_table_names() if t != "alembic_version"]
+
+if not has_alembic_version:
+    if user_tables:
+        print("[startup] Existing schema detected without alembic_version; stamping head.")
+    else:
+        print("[startup] Empty database detected; creating schema and stamping head.")
+        from app.database import init_db
+        init_db()
+EOF
+
+if python - <<'EOF'
+from sqlalchemy import create_engine, inspect
+from app.config import settings
+
+engine = create_engine(settings.database_url)
+with engine.connect() as conn:
+    inspector = inspect(conn)
+    has_alembic_version = inspector.has_table("alembic_version")
+    user_tables = [t for t in inspector.get_table_names() if t != "alembic_version"]
+
+if has_alembic_version:
+    raise SystemExit(0)
+raise SystemExit(1 if user_tables else 2)
+EOF
+then
+    alembic upgrade head
+else
+    state=$?
+    if [ "$state" -eq 1 ] || [ "$state" -eq 2 ]; then
+        alembic stamp head
+    else
+        exit "$state"
+    fi
+fi
 echo "[startup] Migrations complete."
 echo ""
 

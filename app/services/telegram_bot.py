@@ -120,6 +120,25 @@ class TelegramBotWorker:
         base_url = f"https://api.telegram.org/bot{settings.telegram_bot_token}"
 
         with httpx.Client(timeout=max(settings.telegram_bot_poll_timeout_seconds + 5, 10)) as client:
+            if settings.telegram_poll_drop_pending_on_start:
+                try:
+                    # Drop stale queued updates from before restart/deploy.
+                    flush_resp = client.get(
+                        f"{base_url}/getUpdates",
+                        params={"timeout": 0, "offset": -1, "limit": 1},
+                    )
+                    flush_resp.raise_for_status()
+                    flush_data = flush_resp.json()
+                    if flush_data.get("ok"):
+                        latest = flush_data.get("result") or []
+                        if latest:
+                            update_id = int(latest[-1].get("update_id", 0) or 0)
+                            if update_id:
+                                self._offset = update_id + 1
+                        print("[telegram] Drained pending updates on startup.")
+                except Exception as exc:
+                    print(f"[telegram] Pending update drain skipped: {exc}")
+
             while not self._stop_event.is_set():
                 try:
                     params: dict = {
@@ -291,6 +310,9 @@ def _handle_message(
 ) -> None:
     db: Session = SessionLocal()
     try:
+        if text and text.startswith("/"):
+            print(f"[telegram] cmd user={telegram_user_id} chat={chat_id} text={text[:80]}")
+
         # ── Strip @botname from commands ──
         if text.startswith("/"):
             first_space = text.find(" ")
@@ -319,7 +341,7 @@ def _handle_message(
                 client, base_url, chat_id,
                 "<b>AutoHub Commands</b>\n"
                 "/id\n/menu\n/summary\n"
-                "/note add &lt;content&gt;\n/note list\n"
+                "/note add &lt;content&gt;\n/note list\n/note read &lt;id&gt;\n"
                 "/task add &lt;title&gt;\n/task done &lt;id or partial title&gt;\n/task list\n"
                 "/capture &lt;text&gt;\n/inbox list\n"
                 "/reminder list\n/remind &lt;minutes&gt; &lt;message&gt;"
@@ -348,6 +370,34 @@ def _handle_message(
         if lowered.strip() in _ALIASES:
             lowered = _ALIASES[lowered.strip()]
             text = lowered  # rewrite for downstream handlers
+
+        # ── /note read <id> or bare #<id> ──
+        note_id = None
+        if lowered.startswith("/note read "):
+            candidate = text[11:].strip().lstrip("#")
+            if candidate.isdigit():
+                note_id = int(candidate)
+        elif text.strip().startswith("#"):
+            candidate = text.strip()[1:]
+            if candidate.isdigit():
+                note_id = int(candidate)
+
+        if note_id is not None:
+            note = db.query(models.EncryptedNote).filter(models.EncryptedNote.id == note_id).first()
+            if not note:
+                _send_text(client, base_url, chat_id, f"Note not found: #{note_id}")
+                return
+            try:
+                content = decrypt_text(note.cipher_text)
+            except Exception:
+                content = "<decrypt-error>"
+
+            title = note.title.strip()
+            if title:
+                _send_text(client, base_url, chat_id, f"Note #{note.id} - {title}\n\n{content}")
+            else:
+                _send_text(client, base_url, chat_id, f"Note #{note.id}\n\n{content}")
+            return
 
         # ── Non-command messages → save to inbox ──
         is_command = bool(text.strip().startswith("/"))
@@ -382,6 +432,7 @@ def _handle_message(
                 except Exception:
                     content = "<decrypt-error>"
                 lines.append(f"#{n.id}: {content[:60].replace(chr(10), ' ')}")
+            lines.append("Reply with #<id> or use /note read <id> for full text.")
             _send_text(client, base_url, chat_id, "\n".join(lines))
             return
 

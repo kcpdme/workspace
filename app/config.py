@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     telegram_chat_id: str = ""
     telegram_bot_polling_enabled: bool = True
     telegram_bot_poll_timeout_seconds: int = 20
+    # If True, polling mode discards old queued Telegram updates on startup so
+    # commands sent before a restart are not replayed out of context.
+    telegram_poll_drop_pending_on_start: bool = True
     # If set, the bot registers a webhook instead of using long-polling.
     # Must be a publicly reachable HTTPS URL, e.g. https://yourdomain.com/telegram/webhook
     telegram_webhook_url: str = ""
