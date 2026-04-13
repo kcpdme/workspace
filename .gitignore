@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
-.env
+# .env        ← temporarily tracked for server deployment (re-add after pulling)
 automation_hub.db
+*.db-shm
+*.db-wal
