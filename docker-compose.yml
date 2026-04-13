@@ -1,4 +1,25 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: automation-hub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: automationhub
+      POSTGRES_USER: hubuser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_strong_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hubuser -d automationhub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # NOT exposed to host by default — app connects via internal Docker network.
+    # To connect locally via SSH tunnel: ssh -L 5432:localhost:5432 user@hub.kcpd.top
+    # Then uncomment the next two lines for local access:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
   app:
     build: .
     container_name: automation-hub
@@ -6,8 +27,15 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: sqlite:////data/automation_hub.db
+      # Override DATABASE_URL to use the docker-internal postgres service.
+      DATABASE_URL: postgresql://hubuser:${POSTGRES_PASSWORD:-changeme_strong_password}@db:5432/automationhub
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/data
+      - ./media:/app/media   # Local media cache for Telegram photos
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:   # Persistent named volume — survives container rebuilds

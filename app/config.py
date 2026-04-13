@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     daily_summary_channel: str = "telegram"
     daily_summary_target: str = ""
 
+    # Postgres password — used by docker-compose to spin up the DB service.
+    # The DATABASE_URL in docker-compose overrides the one here automatically.
+    postgres_password: str = "changeme_strong_password"
+
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
     telegram_bot_polling_enabled: bool = True

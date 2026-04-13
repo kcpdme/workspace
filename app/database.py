@@ -1,19 +1,38 @@
+from pathlib import Path
+
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config import settings
 
+_is_sqlite = settings.database_url.startswith("sqlite")
+_is_postgres = settings.database_url.startswith("postgresql")
 
-connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
-engine = create_engine(settings.database_url, connect_args=connect_args)
+# ─── Engine Configuration ─────────────────────────────────────────────────────
+# pool_pre_ping: verify connections before use (critical for long-running
+#   processes and serverless/Docker restarts where the DB may have restarted).
+# pool_size / max_overflow: keep a small warm pool; fine for a personal hub.
+
+connect_args = {"check_same_thread": False} if _is_sqlite else {}
+
+engine = create_engine(
+    settings.database_url,
+    connect_args=connect_args,
+    pool_pre_ping=True,
+    **({} if _is_sqlite else {
+        "pool_size": 5,
+        "max_overflow": 10,
+        "pool_recycle": 1800,   # Recycle connections after 30 min (prevents stale connections)
+    }),
+)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-# Enable WAL mode + performance pragmas for SQLite.
-# WAL allows concurrent reads alongside a single writer and dramatically
-# reduces the chance of "database is locked" errors in multi-thread use.
-if settings.database_url.startswith("sqlite"):
+# ─── SQLite-only pragmas ──────────────────────────────────────────────────────
+# WAL mode + performance pragmas.  Only applied for SQLite (local dev fallback).
+if _is_sqlite:
     @event.listens_for(engine, "connect")
     def _set_sqlite_pragmas(dbapi_conn, _connection_record):
         cursor = dbapi_conn.cursor()

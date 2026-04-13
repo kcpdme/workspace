@@ -88,6 +88,9 @@ def list_inbox(
 
 @router.get("/inbox/{item_id}/media")
 def inbox_media(item_id: int, db: Session = Depends(get_db)):
+    import mimetypes
+    from pathlib import Path
+
     item = db.query(models.TelegramInboxItem).filter(models.TelegramInboxItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Inbox item not found")
@@ -96,8 +99,22 @@ def inbox_media(item_id: int, db: Session = Depends(get_db)):
     if not settings.telegram_bot_token:
         raise HTTPException(status_code=400, detail="Telegram bot token is not configured")
 
+    # ── Local media cache ────────────────────────────────────────────────────
+    # Media is stored in ./media/{file_unique_id}.{ext} so it survives
+    # Telegram link expiry and works offline after first download.
+    media_dir = Path("media")
+    media_dir.mkdir(exist_ok=True)
+
+    # Check if already cached on disk.
+    if item.file_unique_id:
+        for cached in media_dir.glob(f"{item.file_unique_id}.*"):
+            media_type, _ = mimetypes.guess_type(str(cached))
+            media_type = media_type or "application/octet-stream"
+            return Response(content=cached.read_bytes(), media_type=media_type)
+
+    # ── Fetch from Telegram and cache ────────────────────────────────────────
     try:
-        with httpx.Client(timeout=20) as client:
+        with httpx.Client(timeout=30) as client:
             file_meta = client.get(
                 f"https://api.telegram.org/bot{settings.telegram_bot_token}/getFile",
                 params={"file_id": item.file_id},
@@ -112,17 +129,36 @@ def inbox_media(item_id: int, db: Session = Depends(get_db)):
                 f"https://api.telegram.org/file/bot{settings.telegram_bot_token}/{file_path}",
             )
             media_response.raise_for_status()
+
             media_type = media_response.headers.get("content-type", "application/octet-stream")
             if media_type == "application/octet-stream":
                 if item.item_type in {"photo", "sticker"}:
                     media_type = "image/jpeg"
                 elif item.item_type == "animation":
                     media_type = "image/gif"
+
+            # Persist to local cache.
+            if item.file_unique_id:
+                ext = mimetypes.guess_extension(media_type) or (
+                    ".jpg" if "jpeg" in media_type else
+                    ".mp4" if "video" in media_type else
+                    ".ogg" if "ogg" in media_type else ".bin"
+                )
+                # mimetypes.guess_extension returns .jpe for jpeg on some systems
+                if ext in {".jpe", ".jpeg"}:
+                    ext = ".jpg"
+                cache_path = media_dir / f"{item.file_unique_id}{ext}"
+                try:
+                    cache_path.write_bytes(media_response.content)
+                except Exception:
+                    pass  # Cache write failure is non-fatal
+
             return Response(content=media_response.content, media_type=media_type)
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Media fetch failed: {exc}")
+
 
 
 @router.post("/inbox/{item_id}/archive")
