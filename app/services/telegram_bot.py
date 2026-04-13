@@ -291,6 +291,20 @@ def _handle_message(
 ) -> None:
     db: Session = SessionLocal()
     try:
+        # ── Strip @botname from commands ──
+        if text.startswith("/"):
+            first_space = text.find(" ")
+            if first_space != -1:
+                cmd = text[:first_space]
+                args = text[first_space:]
+            else:
+                cmd = text
+                args = ""
+
+            if "@" in cmd:
+                cmd = cmd.split("@")[0]
+                text = cmd + args
+
         lowered = text.lower()
 
         # ── Public commands (no allowlist required) ──
@@ -430,6 +444,19 @@ def _handle_message(
             db.add(task)
             db.commit()
             _send_text(client, base_url, chat_id, f"Task #{task.id} '{task.title}' marked done.")
+            return
+
+        # ── /capture list ──
+        if lowered.startswith("/capture list"):
+            captures = db.query(models.Capture).order_by(models.Capture.created_at.desc()).limit(10).all()
+            if not captures:
+                _send_text(client, base_url, chat_id, "No captures yet.")
+                return
+            lines = ["Latest captures:"]
+            for c in captures:
+                snippet = c.content.replace('\n', ' ')[:60]
+                lines.append(f"#{c.id}: {snippet}")
+            _send_text(client, base_url, chat_id, "\n".join(lines))
             return
 
         # ── /capture ──
