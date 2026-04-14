@@ -1111,53 +1111,82 @@ function App() {
         <!-- Sidebar -->
         <aside id="main-sidebar" className=${`panel sidebar ${sidebarOpen ? "open" : ""}`}>
           <div className="sidebar-brand">
-            <div className="brand-icon"><${Icon} name="zap" size=${22} /></div>
+            <div className="brand-icon"><${Icon} name="zap" size=${20} /></div>
             <div className="brand-text">
               <div className="brand-name">AutoHub</div>
               <div className="brand-subtitle">Command Center</div>
             </div>
+            <span className="brand-version">v2</span>
           </div>
 
-          <div className="sidebar-divider"></div>
-
-          <div className="sidebar-label">Modules</div>
+          <div className="sidebar-label">Workspace</div>
           <nav className="sidebar-nav">
-            ${NAV_CONFIG.map((item, i) => html`
+            ${NAV_CONFIG.filter(n => ["summary","captures","inbox","tasks","notes","reminders"].includes(n.id)).map((item) => html`
               <button
                 key=${item.id}
                 id=${`nav-${item.id}`}
                 className=${`nav-link ${section === item.id ? "active" : ""}`}
                 onClick=${() => openSection(item.id)}
               >
-                <${Icon} name=${item.icon} size=${18} />
+                <${Icon} name=${item.icon} size=${16} />
                 ${item.label}
                 ${item.id === "inbox" && inboxItems.length > 0 ? html`<span className="nav-badge pulse-badge">${inboxItems.length}</span>` : ""}
                 ${item.id === "tasks" && tasks.filter(t => t.status !== "done").length > 0 ? html`<span className="nav-badge">${tasks.filter(t => t.status !== "done").length}</span>` : ""}
                 ${item.id === "reminders" && reminders.filter(r => r.status === "pending").length > 0 ? html`<span className="nav-badge">${reminders.filter(r => r.status === "pending").length}</span>` : ""}
+              </button>
+            `)}
+          </nav>
+
+          <div className="sidebar-label">Tools</div>
+          <nav className="sidebar-nav" style=${{ flex: "0 0 auto" }}>
+            ${NAV_CONFIG.filter(n => ["habits","pomodoro","settings"].includes(n.id)).map((item) => html`
+              <button
+                key=${item.id}
+                id=${`nav-${item.id}`}
+                className=${`nav-link ${section === item.id ? "active" : ""}`}
+                onClick=${() => openSection(item.id)}
+              >
+                <${Icon} name=${item.icon} size=${16} />
+                ${item.label}
                 ${item.id === "habits" && habits.length > 0 ? html`<span className="nav-badge">${habitsCompletedToday}/${habits.length}</span>` : ""}
               </button>
             `)}
           </nav>
 
           <div className="sidebar-footer">
+            ${isMiniApp ? html`
+              <div className="sidebar-user-chip">
+                <div className="sidebar-user-avatar">
+                  ${(miniAppUser.first_name || "T").charAt(0).toUpperCase()}
+                </div>
+                <div className="sidebar-user-info">
+                  <div className="sidebar-user-name">${miniAppUser.first_name || "Telegram User"}</div>
+                  <div className="sidebar-user-role">Mini App</div>
+                </div>
+              </div>
+            ` : html`
+              <div className="sidebar-user-chip">
+                <div className="sidebar-user-avatar">A</div>
+                <div className="sidebar-user-info">
+                  <div className="sidebar-user-name">Admin</div>
+                  <div className="sidebar-user-role">Owner</div>
+                </div>
+              </div>
+            `}
             <button className="nav-link" onClick=${() => setDarkMode(v => !v)}>
-              <${Icon} name=${darkMode ? "sun" : "moon"} size=${18} /> ${darkMode ? "Light Mode" : "Dark Mode"}
+              <${Icon} name=${darkMode ? "sun" : "moon"} size=${15} /> ${darkMode ? "Light Mode" : "Dark Mode"}
             </button>
             <button className="nav-link" onClick=${() => setShowShortcuts(true)}>
-              <${Icon} name="keyboard" size=${18} /> Shortcuts
-              <span className="nav-badge" style=${{ background: "rgba(255,255,255,0.06)", color: "var(--text-dim)" }}>?</span>
+              <${Icon} name="keyboard" size=${15} /> Shortcuts
+              <span className="nav-badge" style=${{ marginLeft: "auto" }}>?</span>
             </button>
             ${isMiniApp ? html`
-              <div className="nav-link" style=${{ cursor: "default", opacity: 0.7, fontSize: "0.8rem" }}>
-                <${Icon} name="zap" size=${14} />
-                ${miniAppUser.first_name || "Telegram User"}
-              </div>
-              <button className="nav-link" onClick=${logout} style=${{ color: "var(--text-dim)" }}>
-                <${Icon} name="x" size=${16} /> Close App
+              <button className="nav-link" onClick=${logout}>
+                <${Icon} name="x" size=${15} /> Close App
               </button>
             ` : html`
-              <button className="nav-link" onClick=${logout} style=${{ color: "var(--red-400, #f87171)" }}>
-                <${Icon} name="log-out" size=${16} /> Logout
+              <button className="nav-link" onClick=${logout} style=${{ color: "#f87171" }}>
+                <${Icon} name="log-out" size=${15} /> Logout
               </button>
             `}
           </div>
