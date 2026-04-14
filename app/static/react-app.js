@@ -1209,8 +1209,6 @@ function App() {
               <div className=${`status-pill ${statusKind}`}>${busy ? "Syncing…" : status || "Ready"}</div>
             </div>
           </header>
-            </div>
-          </header>
 
           <!-- ═══ SUMMARY SECTION ═══ -->
           ${section === "summary" && html`
