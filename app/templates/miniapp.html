@@ -13,19 +13,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260413e" />
+    <link rel="stylesheet" href="/static/style.css?v=20260413f" />
 
     <style>
       :root {
-        --tg-bg: var(--tg-theme-bg-color, #0f1a12);
-        --tg-text: var(--tg-theme-text-color, #e6f4ea);
-        --tg-hint: var(--tg-theme-hint-color, #8aab91);
-        --tg-link: var(--tg-theme-link-color, #4caf73);
-        --tg-button-bg: var(--tg-theme-button-color, #2d7a4f);
+        --tg-bg: var(--tg-theme-bg-color, #121620);
+        --tg-text: var(--tg-theme-text-color, #e6ebf7);
+        --tg-hint: var(--tg-theme-hint-color, #8b99b3);
+        --tg-link: var(--tg-theme-link-color, #3b8ee0);
+        --tg-button-bg: var(--tg-theme-button-color, #2f77c8);
         --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
-        --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #162119);
-        --green-500: #3db866;
-        --green-600: #2d7a4f;
+        --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #202635);
+        --green-500: #3b8ee0;
+        --green-600: #2f77c8;
         --radius: 16px;
       }
 
@@ -63,18 +63,18 @@
       .loader-logo {
         width: 72px;
         height: 72px;
-        background: linear-gradient(135deg, var(--green-600), #1a4d30);
+        background: linear-gradient(135deg, var(--green-600), #1c4c85);
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 8px 32px rgba(45, 122, 79, 0.4);
+        box-shadow: 0 8px 32px rgba(47, 119, 200, 0.38);
         animation: pulse-logo 2s ease-in-out infinite;
       }
 
       @keyframes pulse-logo {
-        0%, 100% { box-shadow: 0 8px 32px rgba(45, 122, 79, 0.4); transform: scale(1); }
-        50% { box-shadow: 0 12px 48px rgba(45, 122, 79, 0.7); transform: scale(1.04); }
+        0%, 100% { box-shadow: 0 8px 32px rgba(47, 119, 200, 0.38); transform: scale(1); }
+        50% { box-shadow: 0 12px 48px rgba(47, 119, 200, 0.62); transform: scale(1.04); }
       }
 
       .loader-logo svg {
@@ -106,7 +106,7 @@
       .spinner {
         width: 36px;
         height: 36px;
-        border: 3px solid rgba(61, 184, 102, 0.15);
+        border: 3px solid rgba(59, 142, 224, 0.18);
         border-top-color: var(--green-500);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
@@ -245,8 +245,8 @@
         if (tg) {
           tg.expand();
           tg.ready();
-          tg.setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--tg-bg').trim() || '#0f1a12');
-          tg.setHeaderColor('#0f1a12');
+          tg.setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--tg-bg').trim() || '#121620');
+          tg.setHeaderColor('#121620');
         }
 
         const initData = tg?.initData || '';
@@ -294,7 +294,7 @@
 
           // Dynamically import the React app.
           // The React app detects miniapp mode via appRoot.dataset.miniappMode.
-          await import('/static/react-app.js?v=20260413e');
+          await import('/static/react-app.js?v=20260413f');
 
           // Small delay so React can mount.
           await new Promise(r => setTimeout(r, 300));
